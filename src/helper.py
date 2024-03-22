@@ -20,6 +20,50 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger()
 
 
+# def load_checkpoint(
+#     device,
+#     r_path,
+#     encoder,
+#     predictor,
+#     target_encoder,
+#     opt,
+#     scaler,
+# ):
+#     try:
+#         checkpoint = torch.load(r_path, map_location=torch.device('cpu'))
+#         epoch = checkpoint['epoch']
+
+#         # -- loading encoder
+#         pretrained_dict = checkpoint['encoder']
+#         msg = encoder.load_state_dict(pretrained_dict)
+#         logger.info(f'loaded pretrained encoder from epoch {epoch} with msg: {msg}')
+
+#         # -- loading predictor
+#         pretrained_dict = checkpoint['predictor']
+#         msg = predictor.load_state_dict(pretrained_dict)
+#         logger.info(f'loaded pretrained encoder from epoch {epoch} with msg: {msg}')
+
+#         # -- loading target_encoder
+#         if target_encoder is not None:
+#             print(list(checkpoint.keys()))
+#             pretrained_dict = checkpoint['target_encoder']
+#             msg = target_encoder.load_state_dict(pretrained_dict)
+#             logger.info(f'loaded pretrained encoder from epoch {epoch} with msg: {msg}')
+
+#         # -- loading optimizer
+#         opt.load_state_dict(checkpoint['opt'])
+#         if scaler is not None:
+#             scaler.load_state_dict(checkpoint['scaler'])
+#         logger.info(f'loaded optimizers from epoch {epoch}')
+#         logger.info(f'read-path: {r_path}')
+#         del checkpoint
+
+#     except Exception as e:
+#         logger.info(f'Encountered exception when loading checkpoint {e}')
+#         epoch = 0
+
+#     return encoder, predictor, target_encoder, opt, scaler, epoch
+
 def load_checkpoint(
     device,
     r_path,
@@ -35,20 +79,28 @@ def load_checkpoint(
 
         # -- loading encoder
         pretrained_dict = checkpoint['encoder']
-        msg = encoder.load_state_dict(pretrained_dict)
-        logger.info(f'loaded pretrained encoder from epoch {epoch} with msg: {msg}')
+        model_dict = encoder.state_dict()
+        pretrained_dict = {k.replace("module.", ""): v for k, v in pretrained_dict.items() if k.replace("module.", "") in model_dict}
+        model_dict.update(pretrained_dict)
+        encoder.load_state_dict(model_dict)
+        logger.info(f'loaded pretrained encoder from epoch {epoch}')
 
         # -- loading predictor
         pretrained_dict = checkpoint['predictor']
-        msg = predictor.load_state_dict(pretrained_dict)
-        logger.info(f'loaded pretrained encoder from epoch {epoch} with msg: {msg}')
+        model_dict = predictor.state_dict()
+        pretrained_dict = {k.replace("module.", ""): v for k, v in pretrained_dict.items() if k.replace("module.", "") in model_dict}
+        model_dict.update(pretrained_dict)
+        predictor.load_state_dict(model_dict)
+        logger.info(f'loaded pretrained predictor from epoch {epoch}')
 
         # -- loading target_encoder
         if target_encoder is not None:
-            print(list(checkpoint.keys()))
             pretrained_dict = checkpoint['target_encoder']
-            msg = target_encoder.load_state_dict(pretrained_dict)
-            logger.info(f'loaded pretrained encoder from epoch {epoch} with msg: {msg}')
+            model_dict = target_encoder.state_dict()
+            pretrained_dict = {k.replace("module.", ""): v for k, v in pretrained_dict.items() if k.replace("module.", "") in model_dict}
+            model_dict.update(pretrained_dict)
+            target_encoder.load_state_dict(model_dict)
+            logger.info(f'loaded pretrained target_encoder from epoch {epoch}')
 
         # -- loading optimizer
         opt.load_state_dict(checkpoint['opt'])
